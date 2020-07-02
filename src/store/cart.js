@@ -1,0 +1,89 @@
+const TOGGLE_CART = "cart/TOGGLE_CART";
+const ADD_ITEM = "cart/ADD_ITEM";
+const REMOVE_ITEM = "cart/REMOVE_ITEM";
+const UPDATE_TOTAL = "cart/UPDATE_TOTAL";
+
+function getCartTotal(state) {
+  const items = state.items;
+  let total = 0;
+  Object.keys(items).forEach(itemId => {
+    const item = items[itemId];
+    total += item.quantity * item.price;
+  });
+  return total;
+}
+
+export function toggleCart() {
+  return {
+    type: TOGGLE_CART
+  };
+}
+export function addItem(item) {
+  return dispatch => {
+    dispatch({
+      type: ADD_ITEM,
+      payload: item
+    });
+
+    dispatch({ type: UPDATE_TOTAL });
+  };
+}
+export function removeItem(item) {
+  return dispatch => {
+    dispatch({
+      type: REMOVE_ITEM,
+      payload: item
+    });
+
+    dispatch({ type: UPDATE_TOTAL });
+  };
+}
+
+export default function cart(
+  state = { items: {}, total: 0, isOpen: false },
+  action
+) {
+  switch (action.type) {
+    case TOGGLE_CART:
+      return {
+        ...state,
+        isOpen: !state.isOpen
+      };
+    case ADD_ITEM: {
+      const { id, ...data } = action.payload;
+      let item = state.items[id];
+      if (item) {
+        item.quantity += 1;
+      } else {
+        item = {
+          ...data,
+          quantity: 1
+        };
+      }
+      return {
+        ...state,
+        items: {
+          ...state.items,
+          [id]: item
+        }
+      };
+    }
+    case REMOVE_ITEM: {
+      const { id } = action.payload;
+      let item = state.items[id];
+      if (item.quantity === 1) {
+        delete state.items[id];
+      } else {
+        item.quantity -= 1;
+      }
+      return {
+        ...state,
+        items: { ...state.items }
+      };
+    }
+    case UPDATE_TOTAL:
+      return { ...state, total: getCartTotal(state) };
+    default:
+      return state;
+  }
+}
